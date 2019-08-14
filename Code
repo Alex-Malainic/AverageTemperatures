@@ -1,17 +1,13 @@
-average=df
-average.dropna(inplace=True)   #dropping missing values
-average['dt'] = pd.to_datetime(average['dt']).dt.year  # converting the column to datetime, then extracting the years only;
-average = average.groupby(['dt'])['AverageTemperature'].mean().reset_index() # getting the mean temperature for each year;
-trace=go.Scatter(      #creating the plot using plotly;
-    x=average['dt'],
-    y=average['AverageTemperature'],
-    mode='lines',
-    )
+#necessary modules for the analysis
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+%matplotlib inline
+import plotly.offline as py
+py.init_notebook_mode(connected=True)
+import plotly.graph_objs as go
+import seaborn as sns
 
-layout = go.Layout(
-    xaxis=dict(title='Year'),
-    yaxis=dict(title='Average Temperature, °C'),
-    title='Average land temperature throughout the years',)
+# the database was taken from kaggle: https://www.kaggle.com/berkeleyearth/climate-change-earth-surface-temperature-data
 
-fig = go.Figure(data=[trace], layout=layout)
-py.iplot(fig, filename='line-mode')
+df= pd.read_csv("X:\\climate-change-earth-surface-temperature-data\\GlobalLandTemperaturesByCountry.csv")
