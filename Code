@@ -1,0 +1,17 @@
+average=df
+average.dropna(inplace=True)   #dropping missing values
+average['dt'] = pd.to_datetime(average['dt']).dt.year  # converting the column to datetime, then extracting the years only;
+average = average.groupby(['dt'])['AverageTemperature'].mean().reset_index() # getting the mean temperature for each year;
+trace=go.Scatter(      #creating the plot using plotly;
+    x=average['dt'],
+    y=average['AverageTemperature'],
+    mode='lines',
+    )
+
+layout = go.Layout(
+    xaxis=dict(title='Year'),
+    yaxis=dict(title='Average Temperature, °C'),
+    title='Average land temperature throughout the years',)
+
+fig = go.Figure(data=[trace], layout=layout)
+py.iplot(fig, filename='line-mode')
