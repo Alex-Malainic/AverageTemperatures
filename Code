@@ -12,3 +12,97 @@ import seaborn as sns
 # the database was taken from kaggle: https://www.kaggle.com/berkeleyearth/climate-change-earth-surface-temperature-data
 
 df= pd.read_csv("X:\\climate-change-earth-surface-temperature-data\\GlobalLandTemperaturesByCountry.csv")
+
+# the next graph will show the average temperature on the earth's continents over the years
+
+years = np.unique(df['dt'].apply(lambda x: x[:4])) #extracting each unique year
+countries = np.unique(df['Country']) #extracting each unique country
+continent = ['Africa', 'Europe', 'Asia', 'North America', 'South America', 'Oceania']
+mean_temp_year_country = [ [0] * len(years[120:]) for i in range(len(continent))] #creating a list of lists, for each continent
+
+j = 0
+for country in continent:    #populating the list of lists with the respective yearly mean temperatures of these continents
+    all_temp_country = df[df['Country'] == country]
+    i = 0
+    for year in years[120:]:
+        mean_temp_year_country[j][i] = all_temp_country[all_temp_country['dt'].apply(
+                lambda x: x[:4]) == year]['AverageTemperature'].mean()
+        i +=1
+    j += 1
+
+# note: I chose to not include the first 120 years, because of too many missing values;
+
+traces = []
+colors = ['rgb(255, 0, 0)', 'rgb(255, 0, 255)', 'rgb(0, 0, 0)',
+          'rgb(115, 91, 54)', 'rgb(0, 255, 0)', 'rgb(32, 0, 133)']
+for i in range(len(continent)):   #creating the figure
+    traces.append(go.Scatter(
+        x=years[120:],
+        y=mean_temp_year_country[i],
+        mode='lines',
+        name=continent[i],
+        line=dict(color=colors[i]),
+        ))
+layout = go.Layout(
+    xaxis=dict(title='Year'),
+    yaxis=dict(title='Average Temperature, °C'),
+    title='Average temperature on the continents',)
+fig = go.Figure(data=traces, layout=layout)
+py.iplot(fig)
+
+
+#furthermore, I've created a graph containing the average temperature on Earth, in order to see if there's any increase or decrease
+
+average=df
+average.dropna(inplace=True)   #dropping missing values
+average['dt'] = pd.to_datetime(average['dt']).dt.year  # converting the column to datetime, then extracting the years only;
+average = average.groupby(['dt'])['AverageTemperature'].mean().reset_index() # getting the mean temperature for each year;
+trace=go.Scatter(      #creating the plot using plotly;
+    x=average['dt'],
+    y=average['AverageTemperature'],
+    mode='lines',
+    )
+
+layout = go.Layout(
+    xaxis=dict(title='Year'),
+    yaxis=dict(title='Average Temperature, °C'),
+    title='Average land temperature throughout the years',)
+
+fig = go.Figure(data=[trace], layout=layout)
+py.iplot(fig, filename='line-mode')
+
+# the next figure is a choropleth map, each country will have it's respective mean temperature when hovered over
+
+meantemp = df.groupby('Country').AverageTemperature.mean() #average temperatures per country
+countries = np.unique(df['Country'])
+data = [dict(type = 'choropleth',
+    locations=countries, # Spatial coordinates
+    z = meantemp, # Data to be color-coded
+    locationmode = 'country names', # set of locations match entries in `locations`
+    colorscale = 'blues',       
+    marker = dict(
+            line = dict(color = 'rgb(0,0,50)', width = 0.8)),
+            colorbar = dict(autotick = True,  title = 'Average Temperature,°C')
+            ),         
+]
+layout = dict(
+    title = 'Average land temperature in the world',
+    geo=dict(
+        showframe=False,
+        showcoastlines=False,
+        projection_type='equirectangular'
+    )
+)
+
+fig = dict(data=data, layout=layout)
+py.iplot(fig, validate=False, filename='worldmap')
+
+
+# next, a small barplot ordered by the hottest country will provide some useful insights regarding which countries are the coldest or the hottest
+
+meantemp = df.groupby('Country').AverageTemperature.mean()
+meantemp = meantemp.sort_values(ascending = False)
+f, ax = plt.subplots(figsize=(9, 42))
+sns.barplot(x=meantemp, y=meantemp.index, palette=sns.color_palette("RdBu_r", len(meantemp)))
+texts = ax.set(ylabel="", xlabel="Temperature (Celsius)", title="Average temperature in each country")
+
